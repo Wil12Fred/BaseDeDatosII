@@ -71,6 +71,9 @@ string ejecutar(string& command){
 					string oper,tabla,cond,nameindex;
 					iss >> oper >> tabla >> nameindex >> cond;
 					int tipo=obtener_tipo(tabla, cond);
+					cout << tabla << " " << cond << endl;
+					cout << "pase\n" << endl;
+					cout << tipo << endl;
 					if(tipo==0){//si existe
 						AVL<int> A;
 						int t=get_MaxId(tabla);
@@ -104,6 +107,18 @@ string ejecutar(string& command){
 						fclose(pFile);
 						//ifs.close();
 						bfs(A.m_head, nameindex);
+						pFile = fopen("indixes.txt", "rw");
+						if(pFile==NULL){
+							cout << "pase\n";
+							pFile=fopen("indexes.txt", "w");
+							fputs (string(tabla+" "+cond+" "+nameindex+"\n").c_str(), pFile);
+							fclose(pFile);
+						} else {
+							fclose (pFile);
+							pFile = fopen("indexes.txt", "a");
+							fputs (string(tabla+" "+cond+" "+nameindex+"\n").c_str(), pFile);
+							fclose(pFile);
+						}
 						//A.m_head=loadAVL<int>("index");
 					}
 				}

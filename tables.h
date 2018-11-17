@@ -1,4 +1,5 @@
 vector<pair<int,int> > obtener_tabla(string name){
+	cout << name << endl;
 	vector<pair<int,int> > ES;
 	std::ifstream ifs ("tables.txt", std::ifstream::in);
 	string line;

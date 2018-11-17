@@ -340,8 +340,9 @@ void select(string name){
 void select(string name, string pos, string cond){
 	string nameIndex;
 	if(existIndice(name, pos, nameIndex)){
+		cout << "usando indice: " << nameIndex << endl;
 		AVL<int> A;
-		A.m_head=loadAVL<int>("IDX_departamento");
+		A.m_head=loadAVL<int>(nameIndex);
 		nodoAVL<int>* f=find(A.m_head, stoi(cond));
 		cout << f->value.size() << endl;
 		FILE* pFile;
