@@ -47,6 +47,23 @@ string ejecutar(string& command){
 					select(tabla);
 				} else {
 					iss >> comp;
+					if(comp[0]=='\''){
+						int ibeg=-1;
+						int iend=-1;
+						for (int jj=0;jj<command.size();jj++){
+							if(ibeg==-1){
+								if(command[jj]=='\''){
+									ibeg=jj;
+								}
+							} else {
+								if(command[jj]=='\''){
+									iend=jj;
+								}
+							}
+						}
+						comp=string(command,ibeg+1, iend-ibeg-1);
+						cout << comp << endl;
+					}
 					select(tabla,cond,comp);
 				}
 			} else if (operation=="BORRAR_TABLAS"){

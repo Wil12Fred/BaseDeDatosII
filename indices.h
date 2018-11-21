@@ -32,6 +32,7 @@ void crear_indice(string tabla, string nameindex, string cond){
 		}
 		fclose(pFile);
 		//ifs.close();
+		cout << nameindex << endl;
 		bfs(A.m_head, nameindex);
 		pFile = fopen("indixes.txt", "rw");
 		if(pFile==NULL){

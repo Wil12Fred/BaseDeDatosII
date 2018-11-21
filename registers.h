@@ -1,28 +1,6 @@
 vector<string> T;
 vector<bool> E;
 
-int obtener_tipo(string tabla, string cond){
-	vector<pair<int,int> > ES = obtener_tabla(tabla);
-	if(ES.size()==0){
-		return -1;
-	}
-	std::ifstream ifs (string(tabla+".txt").c_str(), std::ifstream::in);
-	int tipo=-1;
-	for (int i=0; i<ES.size(); i++){
-		string name_atributo;
-		ifs >> name_atributo;
-		if(name_atributo==cond){
-			if(ES[i].first){
-				tipo=1;
-			} else {
-				tipo=0;
-			}
-		}
-	}
-	ifs.close();
-	return tipo;
-}
-
 bool existIndice(string tabla, string col, string& nameIndex){
 	std::ifstream ifs("indexes.txt", std::ifstream::in);
 	string line;
@@ -53,6 +31,55 @@ bool existIndice(string tabla, string col, string& nameIndex){
 	return true;
 }
 
+bool select(string name, string pos, string cond){
+	string nameIndex;
+	bool existQuery=false;
+	if(existIndice(name, pos, nameIndex)){
+		cout << "usando indice: " << nameIndex << endl;
+		AVL<int> A;
+		A.m_head=loadAVL<int>(nameIndex);
+		nodoAVL<int>* f=find(A.m_head, stoi(cond));
+		cout << f->value.size() << endl;
+		FILE* pFile;
+		pFile = fopen(string(name+".txt").c_str(), "r");
+		for (int i=0;i<f->value.size();i++){
+			fseek(pFile, f->value[i], SEEK_SET);
+			char c;
+			string line;
+			while((c=char(fgetc(pFile)))!='\n'){
+				line.push_back(c);
+			}
+			cout << line << endl;
+			existQuery=true;
+		}
+		fclose(pFile);
+	} else {
+		int t=get_MaxId(name);
+		std::ifstream ifs (string(name+".txt").c_str(), std::ifstream::in);
+		string line;
+		vector<string> H(3);
+		for (int i=0;i<3;i++){
+			ifs >> H[i];
+		}
+		getline(ifs, line);
+		while(getline(ifs, line)){
+			//getline(ifs, line);
+			if(line[0]!=' ' && line[1]!='-'){
+				stringstream iss(line);
+				for (int i=0;i<3;i++){
+					string next;
+					iss >> next;
+					if(pos==H[i] && next==cond){
+						cout << line << endl;
+						existQuery=true;
+					}
+				}
+			}
+		}
+		ifs.close();
+	}
+	return existQuery;
+}
 
 void add_register(string& line_table, string& name, int maxId){//R
 	FILE * pFile;
@@ -80,83 +107,127 @@ void add_register(string& line_table, string& name, int maxId){//R
 	fclose (pFile);
 }
 
+int evaluate_register(string table, string name_register, string types, string& line_table, int maxId=0, bool key=false){
+	string type;
+	if(types.size()<6){
+		int tipo=obtener_tipo(table,name_register);
+		if(tipo==-1){
+			return -1;
+		}
+		if(tipo==0){
+			if(key && select(table, name_register, types)){
+				return -1;
+			}
+			to_size(types, 7);
+			line_table+=types;
+			return stoi(types);
+		} else {
+			to_size(types, 30);
+			line_table+=types;
+			return maxId;
+		}
+	}
+	for (int j=0;j<6;j++){
+		type.push_back(types[j]);
+	}
+	if(type=="increm" || type=="INCREM"){
+		maxId++;
+		string increm = to_string(maxId);
+		to_size(increm, 7);
+		line_table+=increm;
+	}else if(type=="aleato" || type=="ALEATO"){
+		int j=6;
+		while(types[j]==' '){//fixear limite j de types[i][j]
+			j++;
+		}
+		if(types[j]!='('){
+			return -1;
+		}
+		j++;
+		while(types[j]==' '){
+			j++;
+		}
+		int base=0;
+		while(types[j]>='0' && types[j]<='9'){
+			base*=10;
+			base+=types[j]-'0';
+			j++;
+		}
+		while(types[j]==' '){
+			j++;
+		}
+		if(types[j]!=','){
+			return -1;
+		}
+		j++;
+		while(types[j]==' '){
+			j++;
+		}
+		int top=0;
+		while(types[j]>='0' && types[j]<='9'){
+			top*=10;
+			top+=types[j]-'0';
+			j++;
+		}
+		while(types[j]==' '){
+			j++;
+		}
+		if(types[j]!=')'){
+			return -1;
+		}
+		string aleat=to_string(rand()%(top-base)+base);
+		to_size(aleat, 7);
+		line_table+=aleat;
+	}else if(type=="basico" || type=="BASICO"){
+		string basic=name_register+to_string(maxId);
+		to_size(basic, 30);
+		line_table+=basic;
+	} else if(types[0]>=0 && types[0]<=9){
+		string number=to_string(stoi(types));
+		to_size(number, 7);
+		line_table+=number;
+	} else {
+		string basic=types;
+		to_size(basic, 30);
+		line_table+=basic;
+	}
+	return maxId;
+}
+
 string insertar (string& name, vector<string>& name_registers, vector<string>& types, int fori=1){
 	int maxId= get_MaxId(name);
 	string line_table;
 	for (int ii=0;ii<fori;ii++){
+		int lineId=-1;
 		for (int i=0;i<name_registers.size();i++){
-			string type;
-			if(types[i].size()<6){
-				return "Error de syntaxis";
-			}
-			for (int j=0;j<6;j++){
-				type.push_back(types[i][j]);
-			}
-			if(type=="increm" || type=="INCREM"){
-				string increm=to_string(maxId+1);
-				to_size(increm, 7);
-				line_table+=increm;
-			}else if(type=="aleato" || type=="ALEATO"){
-				int j=6;
-				while(types[i][j]==' '){//fixear limite j de types[i][j]
-					j++;
+			string new_reg;
+			if(i==0){
+				int newId=evaluate_register(name, name_registers[i],types[i],new_reg,maxId, true);
+				if(newId==-1){
+					return "Error de Syntaxis";
 				}
-				if(types[i][j]!='('){
-					return "Error de syntaxis";
+				lineId=newId;
+				if(newId>maxId){
+					maxId=newId;
 				}
-				j++;
-				while(types[i][j]==' '){
-					j++;
-				}
-				int base=0;
-				while(types[i][j]>='0' && types[i][j]<='9'){
-					base*=10;
-					base+=types[i][j]-'0';
-					j++;
-				}
-				while(types[i][j]==' '){
-					j++;
-				}
-				if(types[i][j]!=','){
-					return "Error de syntaxis";
-				}
-				j++;
-				while(types[i][j]==' '){
-					j++;
-				}
-				int top=0;
-				while(types[i][j]>='0' && types[i][j]<='9'){
-					top*=10;
-					top+=types[i][j]-'0';
-					j++;
-				}
-				while(types[i][j]==' '){
-					j++;
-				}
-				if(types[i][j]!=')'){
-					return "Error de syntaxis";
-				}
-				string aleat=to_string(rand()%(top-base)+base);
-				to_size(aleat, 7);
-				line_table+=aleat;
-			}else if(type=="basico" || type=="BASICO"){
-				string basic=name_registers[i]+to_string(maxId+1);
-				to_size(basic, 30);
-				line_table+=basic;
-			} else if(types[i][0]>=0 && types[i][0]<=9){
-				string number=to_string(stoi(types[i]));
-				to_size(number, 7);
-				line_table+=number;
 			} else {
-				string basic=types[i];
-				to_size(basic, 30);
-				line_table+=basic;
+				int newId=evaluate_register(name, name_registers[i],types[i],new_reg,lineId);
+				if(newId==-1){
+					return "Error de Syntaxis";
+				}
 			}
+			line_table+=new_reg;
 		}
 		line_table+="\n";
-		maxId++;
+		//maxId++;
 	}
 	add_register(line_table, name, maxId);
+	for (int i=0; i<name_registers.size(); i++){
+		string nameIndex;
+		if(existIndice(name, name_registers[i],nameIndex)){
+			crear_indice(name, nameIndex, name_registers[i]);
+		}
+	}
 	return "Operación ejecutada exitosamente";
 }
 
@@ -306,10 +377,16 @@ void actualizar(string name, string cond, string comp,string cond2,string new_va
 		iss >> H[i];
 	}
 	vector<pair<long,string> > Positions;
-	while (t--){
+	while (t){
 		fgetpos (pFile,&pos);
 		fgets(line, sizeof(line), pFile);
 		Line=string(line);
+		if(Line[0]==' '){
+			break;
+		}
+		if(Line[1]=='-'){
+			continue;
+		}
 		string Line2=Line;
 		stringstream iss(Line);
 		string value;
@@ -326,8 +403,8 @@ void actualizar(string name, string cond, string comp,string cond2,string new_va
 						}
 						j--;
 					} else {
-						if(spaces==i+1){
-							cout << new_value << endl;
+						if(spaces==i){
+							//cout << new_value << endl;
 							if(update==0){
 								for (int k=0;k<new_value.size();k++){
 									Line2[j]=new_value[k];
@@ -340,12 +417,11 @@ void actualizar(string name, string cond, string comp,string cond2,string new_va
 						}
 					}
 				}
-				cout << Line2 << endl;
+				cout << Line2;
 				Positions.push_back(make_pair(pos, Line2));
 			}
 		}
 	}
-	cout << Line.size();
 	for (int i=0;i<Positions.size();i++){
 		fseek ( pFile , Positions[i].first , SEEK_SET );
 		fputs (Positions[i].second.c_str(),pFile);
@@ -362,57 +438,10 @@ void select(string name){
 		ifs >> H[i];
 	}
 	getline(ifs, line);
-	while(t--){
-		getline(ifs, line);
-		if(line[1]!='-'){
+	while(getline(ifs, line)){
+		if(line[0]!=' ' && line[1]!='-'){
 			cout << line << endl;
 		}
 	}
 	ifs.close();
-}
-
-void select(string name, string pos, string cond){
-	string nameIndex;
-	if(existIndice(name, pos, nameIndex)){
-		cout << "usando indice: " << nameIndex << endl;
-		AVL<int> A;
-		A.m_head=loadAVL<int>(nameIndex);
-		nodoAVL<int>* f=find(A.m_head, stoi(cond));
-		cout << f->value.size() << endl;
-		FILE* pFile;
-		pFile = fopen(string(name+".txt").c_str(), "r");
-		for (int i=0;i<f->value.size();i++){
-			fseek(pFile, f->value[i], SEEK_SET);
-			char c;
-			string line;
-			while((c=char(fgetc(pFile)))!='\n'){
-				line.push_back(c);
-			}
-			cout << line << endl;
-		}
-		fclose(pFile);
-	} else {
-		int t=get_MaxId(name);
-		std::ifstream ifs (string(name+".txt").c_str(), std::ifstream::in);
-		string line;
-		vector<string> H(3);
-		for (int i=0;i<3;i++){
-			ifs >> H[i];
-		}
-		getline(ifs, line);
-		while(t--){
-			getline(ifs, line);
-			if(line[1]!='-'){
-				stringstream iss(line);
-				for (int i=0;i<3;i++){
-					string next;
-					iss >> next;
-					if(pos==H[i] && next==cond){
-						cout << line << endl;
-					}
-				}
-			}
-		}
-		ifs.close();
-	}
 }

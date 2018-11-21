@@ -10,8 +10,8 @@ using namespace std;
 #include "utility.h"
 #include "tables.h"
 #include "avl.h"
-#include "registers.h"
 #include "indices.h"
+#include "registers.h"
 #include "gestor.h"
 
 int main(){

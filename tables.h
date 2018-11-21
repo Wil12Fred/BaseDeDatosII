@@ -221,3 +221,26 @@ string crear_tabla (string& command, int begin=0){
 	}
 	return crear_tabla(name, name_registers, type_registers);
 }
+
+
+int obtener_tipo(string tabla, string cond){
+	vector<pair<int,int> > ES = obtener_tabla(tabla);
+	if(ES.size()==0){
+		return -1;
+	}
+	std::ifstream ifs (string(tabla+".txt").c_str(), std::ifstream::in);
+	int tipo=-1;
+	for (int i=0; i<ES.size(); i++){
+		string name_atributo;
+		ifs >> name_atributo;
+		if(name_atributo==cond){
+			if(ES[i].first){
+				tipo=1;
+			} else {
+				tipo=0;
+			}
+		}
+	}
+	ifs.close();
+	return tipo;
+}
