@@ -44,6 +44,8 @@ void clear_tables(){//R
 	FILE * pFile;
 	pFile = fopen ("tables.txt","w");
 	fclose (pFile);
+	pFile = fopen ("indexes.txt","w");
+	fclose (pFile);
 }
 
 void add_table(string& line_table, string& name,vector<string>& headers){

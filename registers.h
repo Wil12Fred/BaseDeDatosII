@@ -23,6 +23,37 @@ int obtener_tipo(string tabla, string cond){
 	return tipo;
 }
 
+bool existIndice(string tabla, string col, string& nameIndex){
+	std::ifstream ifs("indexes.txt", std::ifstream::in);
+	string line;
+	nameIndex="";
+	while (getline(ifs,line)){
+		stringstream iss(line);
+		int co=0;
+		string el;
+		while(iss >> el){
+			if(co==0) {
+				if(tabla!=el){
+					break;
+				}
+			} else if(co==1){
+				if(col!=el){
+					break;
+				}
+			} else {
+				nameIndex=el;
+			}
+			co++;
+		}
+		
+	}
+	if(nameIndex==""){
+		return false;
+	}
+	return true;
+}
+
+
 void add_register(string& line_table, string& name, int maxId){//R
 	FILE * pFile;
 	long lSize;
@@ -49,84 +80,87 @@ void add_register(string& line_table, string& name, int maxId){//R
 	fclose (pFile);
 }
 
-string insertar (string& name, vector<string>& name_registers, vector<string>& types){
+string insertar (string& name, vector<string>& name_registers, vector<string>& types, int fori=1){
 	int maxId= get_MaxId(name);
 	string line_table;
-	for (int i=0;i<name_registers.size();i++){
-		string type;
-		if(types[i].size()<6){
-			return "Error de syntaxis";
-		}
-		for (int j=0;j<6;j++){
-			type.push_back(types[i][j]);
-		}
-		if(type=="increm" || type=="INCREM"){
-			string increm=to_string(maxId+1);
-			to_size(increm, 7);
-			line_table+=increm;
-		}else if(type=="aleato" || type=="ALEATO"){
-			int j=6;
-			while(types[i][j]==' '){//fixear limite j de types[i][j]
-				j++;
-			}
-			if(types[i][j]!='('){
+	for (int ii=0;ii<fori;ii++){
+		for (int i=0;i<name_registers.size();i++){
+			string type;
+			if(types[i].size()<6){
 				return "Error de syntaxis";
 			}
-			j++;
-			while(types[i][j]==' '){
+			for (int j=0;j<6;j++){
+				type.push_back(types[i][j]);
+			}
+			if(type=="increm" || type=="INCREM"){
+				string increm=to_string(maxId+1);
+				to_size(increm, 7);
+				line_table+=increm;
+			}else if(type=="aleato" || type=="ALEATO"){
+				int j=6;
+				while(types[i][j]==' '){//fixear limite j de types[i][j]
+					j++;
+				}
+				if(types[i][j]!='('){
+					return "Error de syntaxis";
+				}
 				j++;
-			}
-			int base=0;
-			while(types[i][j]>='0' && types[i][j]<='9'){
-				base*=10;
-				base+=types[i][j]-'0';
+				while(types[i][j]==' '){
+					j++;
+				}
+				int base=0;
+				while(types[i][j]>='0' && types[i][j]<='9'){
+					base*=10;
+					base+=types[i][j]-'0';
+					j++;
+				}
+				while(types[i][j]==' '){
+					j++;
+				}
+				if(types[i][j]!=','){
+					return "Error de syntaxis";
+				}
 				j++;
+				while(types[i][j]==' '){
+					j++;
+				}
+				int top=0;
+				while(types[i][j]>='0' && types[i][j]<='9'){
+					top*=10;
+					top+=types[i][j]-'0';
+					j++;
+				}
+				while(types[i][j]==' '){
+					j++;
+				}
+				if(types[i][j]!=')'){
+					return "Error de syntaxis";
+				}
+				string aleat=to_string(rand()%(top-base)+base);
+				to_size(aleat, 7);
+				line_table+=aleat;
+			}else if(type=="basico" || type=="BASICO"){
+				string basic=name_registers[i]+to_string(maxId+1);
+				to_size(basic, 30);
+				line_table+=basic;
+			} else if(types[i][0]>=0 && types[i][0]<=9){
+				string number=to_string(stoi(types[i]));
+				to_size(number, 7);
+				line_table+=number;
+			} else {
+				string basic=types[i];
+				to_size(basic, 30);
+				line_table+=basic;
 			}
-			while(types[i][j]==' '){
-				j++;
-			}
-			if(types[i][j]!=','){
-				return "Error de syntaxis";
-			}
-			j++;
-			while(types[i][j]==' '){
-				j++;
-			}
-			int top=0;
-			while(types[i][j]>='0' && types[i][j]<='9'){
-				top*=10;
-				top+=types[i][j]-'0';
-				j++;
-			}
-			while(types[i][j]==' '){
-				j++;
-			}
-			if(types[i][j]!=')'){
-				return "Error de syntaxis";
-			}
-			string aleat=to_string(rand()%(top-base)+base);
-			to_size(aleat, 7);
-			line_table+=aleat;
-		}else if(type=="basico" || type=="BASICO"){
-			string basic=name_registers[i]+to_string(maxId+1);
-			to_size(basic, 30);
-			line_table+=basic;
-		} else if(types[i][0]>=0 && types[i][0]<=9){
-			string number=to_string(stoi(types[i]));
-			to_size(number, 7);
-			line_table+=number;
-		} else {
-			string basic=types[i];
-			to_size(basic, 30);
-			line_table+=basic;
 		}
+		line_table+="\n";
+		maxId++;
 	}
-	line_table+="\n";
-	add_register(line_table, name, maxId+1);
+	add_register(line_table, name, maxId);
 	return "Operación ejecutada exitosamente";
 }
 
-string insertar_en_tabla (string& command, int begin=0){
+string insertar_en_tabla (string& command, int begin=0, int ifor=1){
 	for (int i=begin;i<command.size();i++){
 		if(command[i]!=' '){
 			begin=i;
@@ -212,7 +246,7 @@ string insertar_en_tabla (string& command, int begin=0){
 		name_registers.push_back(name_reg);
 		type_registers.push_back(type_reg);
 	}
-	return insertar(name, name_registers, type_registers);
+	return insertar(name, name_registers, type_registers,ifor);
 }
 
 void eliminar(string name, string cond, string comp){

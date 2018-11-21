@@ -9,8 +9,9 @@ using namespace std;
 
 #include "utility.h"
 #include "tables.h"
-#include "indices.h"
+#include "avl.h"
 #include "registers.h"
+#include "indices.h"
 #include "gestor.h"
 
 int main(){
