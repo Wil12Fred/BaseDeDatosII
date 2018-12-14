@@ -68,6 +68,10 @@ class AVL{
 	}
 	f->value.push_back(value);
     }
+    ~AVL(){
+        if(m_head)
+           delete m_head;
+    }
 };
 
 template<class T>
@@ -81,7 +85,8 @@ void dfs(nodoAVL<T>* n,int nivel=0){
 
 template<class T>
 void bfs(nodoAVL<T>* n, string indexFile){
-	FILE* pFile;
+	FILE* pFile, *pFile2;
+	pFile2 = fopen(string(indexFile+".ind").c_str(), "w");
 	pFile = fopen(string(indexFile+".txt").c_str(), "w");
 	vector<pair<nodoAVL<T>*,int> > BFS;
 	if(n){
@@ -89,19 +94,21 @@ void bfs(nodoAVL<T>* n, string indexFile){
 	}
 	int i=0;
 	int ant=-1;
+	fpos_t pos;
 	while(i<BFS.size()){
-		for (int ii=ant+1; ii<BFS[i].second; ii++){
+		/*for (int ii=ant+1; ii<BFS[i].second; ii++){
 			//cout << endl;
 			fprintf(pFile, "\n");
-		}
-		//cout <<  BFS[i].first->dato << " ";
-		fprintf(pFile, "%d %d %d ",BFS[i].second, BFS[i].first->dato, (int)BFS[i].first->value.size());
+			fprintf(pFile2, "\n");
+		}*/
+		fgetpos(pFile, &pos);
+		//id, dato, cant
+		fprintf(pFile2, "%d %d %d %d\n",BFS[i].second, BFS[i].first->dato, 1, (int)pos);
+		fprintf(pFile, "%d ",(int)BFS[i].first->value.size());
 		for (int j=0;j<BFS[i].first->value.size();j++){
-			//cout << BFS[i].first->value[j] << " ";
 			fprintf(pFile, "%d ", BFS[i].first->value[j]);
 		}
-		//cout << endl;
-		fprintf(pFile, "\n");
+		fprintf(pFile2, "\n");
 		int nlinea=BFS[i].second;
 		if(BFS[i].first->nodo[0]){
 			BFS.push_back(make_pair(BFS[i].first->nodo[0],(nlinea+1)*2-1));
@@ -112,5 +119,6 @@ void bfs(nodoAVL<T>* n, string indexFile){
 		ant=BFS[i].second;
 		i++;
 	}
+	fclose(pFile2);
 	fclose(pFile);
 }

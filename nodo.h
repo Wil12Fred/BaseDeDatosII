@@ -12,6 +12,12 @@ class nodoAVL{
       nodo[0]=nodo[1]= 0;
       altura = 1;
     }
+    ~nodoAVL(){
+	if (nodo[0])
+		delete nodo[0];
+	if (nodo[1])
+		delete nodo[1];
+    }
 };
 template<class T>
 int balanceo(nodoAVL<T>* n){
@@ -70,33 +76,37 @@ vector<int> get(nodoAVL<T>* n, int id){
 }
 
 template<class T>
-nodoAVL<T>* loadAVL(string file){
-	map<int, nodoAVL<T>*> V;
-	FILE* pFile;
-	pFile = fopen(string(file+".txt").c_str(), "r");
-	int id;
-	while(fscanf(pFile, "%d", &id)!=EOF){
-		id++;
-		int value, cant;
-		fscanf(pFile, "%d %d", &value, &cant);
-		if(id==1){
-			V[id]=new nodoAVL<T>(value);
-		} else {
-			int dad=id/2;
-			if(id==dad*2){
-				V[dad]->nodo[0]=new nodoAVL<T>(value);
-				V[id]=V[dad]->nodo[0];
+nodoAVL<T>* loadAVL(string file){//only ind extension
+	try{
+		map<int, nodoAVL<T>*> V;
+		FILE* pFile;
+		pFile = fopen(string(file+".ind").c_str(), "r");
+		int id;
+		while(fscanf(pFile, "%d", &id)!=EOF){
+			id++;
+			int value, cant;
+			fscanf(pFile, "%d %d", &value, &cant);
+			if(id==1){
+				V[id]=new nodoAVL<T>(value);
 			} else {
-				V[dad]->nodo[1]=new nodoAVL<T>(value);
-				V[id]=V[dad]->nodo[1];
+				int dad=id/2;
+				if(id==dad*2){
+					V[dad]->nodo[0]=new nodoAVL<T>(value);
+					V[id]=V[dad]->nodo[0];
+				} else {
+					V[dad]->nodo[1]=new nodoAVL<T>(value);
+					V[id]=V[dad]->nodo[1];
+				}
+			}
+			for (int i=0;i<cant;i++){
+				int pos;
+				fscanf(pFile, "%d", &pos);
+				V[id]->value.push_back(pos);
 			}
 		}
-		for (int i=0;i<cant;i++){
-			int pos;
-			fscanf(pFile, "%d", &pos);
-			V[id]->value.push_back(pos);
-		}
+		fclose(pFile);
+		return V[1];
+	} catch (int e) {
+		return 0;
 	}
-	fclose(pFile);
-	return V[1];
 }
